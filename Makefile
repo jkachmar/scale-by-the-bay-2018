@@ -14,7 +14,7 @@ ghc_opts   = -j +RTS -A128m -RTS
 stack_yaml = STACK_YAML="stack.yaml"
 stack      = $(stack_yaml) stack
 
-# Standard package build
+# Standard build (implies default optimization settings)
 build:
 	$(stack) build $(package) \
 	--ghc-options='$(ghc_opts)'
@@ -26,7 +26,7 @@ build-dirty:
 	--ghc-options='$(ghc_opts)'
 	--force-dirty
 
-# Fast build with maximum parallelism on a 4-core machine
+# Fast build (implies O0 optimizations)
 build-fast:
 	$(stack) build $(package) \
 	--ghc-options='$(ghc_opts)' \
@@ -40,9 +40,11 @@ build-profile:
 	--profile \
 	--ghc-options='$(ghc_opts)'
 
+# Clean the normal working directory
 clean:
 	$(stack) clean
 
+# Clean the profiling directory, as specified in $(prof_dir)
 clean-profile:
 	$(stack) clean --work-dir $(prof_dir)
 
@@ -55,19 +57,24 @@ ghci:
 # Run ghcid against the entire project
 ghcid:
 	$(stack) exec -- ghcid \
-	--command "stack ghci $(package):lib $(package):test:$(test_exe) --ghci-options='-fobject-code $(ghc_opts)'"
+	--command "stack ghci \
+		$(package):lib $(package):test:$(test_exe) \
+		--ghci-options='-fobject-code $(ghc_opts)' \
+		--main-is $(package):$(main_exe)"
 
 # Have ghcid run the test suite on successful recompilation
 ghcid-test:
 	$(stack) exec -- ghcid \
-	--command "stack ghci $(package):lib $(package):test:$(test_exe) --ghci-options='-fobject-code $(ghc_opts)'" \
-	--test "main"
+	--command "stack ghci \
+		$(package):lib $(package):test:$(test_exe) \
+		--ghci-options='-fobject-code $(ghc_opts)'" \
+  --test "main"
 
 # Print documentation
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 test:
-	$(stack) test scale-by-the-bay --ghc-options='$(ghc_opts)'
+	$(stack) test $(package) --ghc-options='$(ghc_opts)'
 
 .PHONY: build build-dirty build-fast build-profile clean clean-profile ghci ghcid ghcid-test help test

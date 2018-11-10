@@ -222,5 +222,5 @@ routes = genericApi (Proxy @Routes)
 
 --------------------------------------------------------------------------------
 -- | The entry point for the application.
-main :: IO ()
-main = putStrLn "Please finish writing me!"
+runServer :: IO ()
+runServer = putStrLn "Please finish writing me!"

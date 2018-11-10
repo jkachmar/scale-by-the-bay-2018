@@ -92,7 +92,7 @@ executables:
 tests:
   tests:
     main: Driver.hs
-    source-dirs: test
+    source-dirs: tests
     ghc-options:
       - -threaded
       - -rtsopts

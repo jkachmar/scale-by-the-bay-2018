@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6f9a2532cd8a87d804d0d8c17c3caea5fc3eedc9f71eeee232da6b28cd3f1e7f
+-- hash: 7a1b3b980ed1b75317b25c341e5b4722726a52a8d31e0ce59c7b7c90ef331041
 
 name:           scale-by-the-bay
 version:        0.1.0
@@ -68,7 +68,7 @@ test-suite tests
   other-modules:
       Paths_scale_by_the_bay
   hs-source-dirs:
-      test
+      tests
   default-extensions: ConstraintKinds DataKinds DeriveGeneric FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs LambdaCase OverloadedStrings PatternSynonyms QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeApplications TypeFamilies TypeOperators ViewPatterns
   ghc-options: -fwarn-tabs -fhide-source-paths -fprint-potential-instances -optP-Wno-nonportable-include-path -Wall -Wcpp-undef -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wno-unused-do-bind -Wno-deprecations -Wno-monomorphism-restriction -Wno-unticked-promoted-constructors -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
