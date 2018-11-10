@@ -1,15 +1,20 @@
 module Server where
 
+import           Data.Aeson.Encode.Pretty
+
 -- Miscellaneous external modules
 import           Data.Aeson
+import qualified Data.ByteString.Lazy      as LBS
 import           Data.Proxy
 import           Data.Text
 import           Data.Time
 import           GHC.Generics
 
 -- Random data generation modules
-import           Generic.Random
-import           Test.QuickCheck
+import           Generic.Random            (genericArbitraryRec,
+                                            genericArbitraryU, uniform,
+                                            withBaseCase)
+import           Test.QuickCheck           (Arbitrary (..), Gen, generate)
 import           Test.QuickCheck.Instances ()
 
 -- Servant modules
@@ -133,6 +138,22 @@ instance Arbitrary Admin where
         <*> arbitrary
         <*> arbitrary
         <*> arbitrary
+
+-- Demonstrate both arbitrary generation of datatypes _and_ generically
+-- derived JSON encoders
+
+testArbitraryJSONEncoding :: IO LBS.ByteString
+testArbitraryJSONEncoding = fmap encodePretty (generate arbitrary :: IO User)
+
+showArbitraryJSONEncoding :: IO ()
+showArbitraryJSONEncoding = LBS.putStr =<< testArbitraryJSONEncoding
+
+showArbitraryJSONDecoding :: IO ()
+showArbitraryJSONDecoding = do
+  maybeUser :: Maybe User <- fmap decode testArbitraryJSONEncoding
+  case maybeUser of
+    Nothing   -> print ("Failed to decode a User!" :: Text)
+    Just user -> print user
 
 --------------------------------------------------------------------------------
 -- | The API contract for all routes associated with a `User`.
