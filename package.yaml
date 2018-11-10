@@ -1,0 +1,106 @@
+name:                scale-by-the-bay
+version:             0.1.0
+license:             Apache-2.0
+
+github:              "jkachmar/scale-by-the-bay-2018"
+author:              "Joe Kachmar"
+maintainer:          "joseph.kachmar@gmail.com"
+copyright:           "2018 Joe Kachmar"
+
+description:         Please see the README on GitHub at <https://github.com/jkachmar/scale-by-the-bay-2018#readme>
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+ghc-options:
+  - -fwarn-tabs
+  - -fhide-source-paths
+  - -fprint-potential-instances
+  - -optP-Wno-nonportable-include-path
+  - -Wall
+  - -Wcpp-undef
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wno-unused-do-bind
+  - -Wno-deprecations
+  - -Wno-monomorphism-restriction
+  - -Wno-unticked-promoted-constructors
+  - -Wpartial-fields
+  - -Wredundant-constraints
+
+default-extensions:
+  - ConstraintKinds
+  - DataKinds
+  - DeriveGeneric
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - InstanceSigs
+  - LambdaCase
+  # - NoImplicitPrelude
+  - OverloadedStrings
+  - PatternSynonyms
+  - QuasiQuotes
+  - RankNTypes
+  - RecordWildCards
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - TemplateHaskell
+  - TypeApplications
+  - TypeFamilies
+  - TypeOperators
+  - ViewPatterns
+
+dependencies:
+  - base >= 4.7 && < 5
+
+library:
+  source-dirs: library
+  dependencies:
+    # Standard library replacements
+    # - rio         >= 0.1.5.0 && < 0.2
+    # - rio-orphans >= 0.1.1.0 && < 0.2
+
+    # External libraries
+    - aeson                >= 1.4.1.0 && < 1.5
+    - generic-random       >= 1.2.0.0 && < 1.3
+    - servant              >= 0.14.1  && < 0.15
+    - servant-mock         >= 0.8.4   && < 0.9
+    - servant-server       >= 0.14.1  && < 0.15
+    - text                 >= 1.2.3.1 && < 1.3
+    - time                 >= 1.8.0.2 && < 1.10
+    - QuickCheck           >= 2.11.3  && < 2.13
+    - quickcheck-instances >= 0.3.19  && < 0.4
+
+executables:
+  demo:
+    main: Main.hs
+    source-dirs: executables
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    # The only dependency to build the executable is our library
+    dependencies: scale-by-the-bay
+
+tests:
+  tests:
+    main: Driver.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      # Our library, to-be-tested
+      - scale-by-the-bay
+
+      # External test support libraries
+      - hspec              >= 2.5.5   && < 2.7
+      - hspec-discover     >= 2.5.5   && < 2.7
+      - hspec-golden-aeson >= 0.7.0.0 && < 0.8
+      - servant-quickcheck >= 0.0.7.3 && < 0.1

@@ -1,0 +1,79 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 8a4a6345a792bc7c0fc281b0526e6cb43497ad92159dc994ca451d7594bdbbeb
+
+name:           scale-by-the-bay
+version:        0.1.0
+description:    Please see the README on GitHub at <https://github.com/jkachmar/scale-by-the-bay-2018#readme>
+homepage:       https://github.com/jkachmar/scale-by-the-bay-2018#readme
+bug-reports:    https://github.com/jkachmar/scale-by-the-bay-2018/issues
+author:         Joe Kachmar
+maintainer:     joseph.kachmar@gmail.com
+copyright:      2018 Joe Kachmar
+license:        Apache-2.0
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/jkachmar/scale-by-the-bay-2018
+
+library
+  exposed-modules:
+      Server
+  other-modules:
+      Paths_scale_by_the_bay
+  hs-source-dirs:
+      library
+  default-extensions: ConstraintKinds DataKinds DeriveGeneric FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs LambdaCase OverloadedStrings PatternSynonyms QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeApplications TypeFamilies TypeOperators ViewPatterns
+  ghc-options: -fwarn-tabs -fhide-source-paths -fprint-potential-instances -optP-Wno-nonportable-include-path -Wall -Wcpp-undef -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wno-unused-do-bind -Wno-deprecations -Wno-monomorphism-restriction -Wno-unticked-promoted-constructors -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      QuickCheck >=2.11.3 && <2.13
+    , aeson >=1.4.1.0 && <1.5
+    , base >=4.7 && <5
+    , generic-random >=1.2.0.0 && <1.3
+    , quickcheck-instances >=0.3.19 && <0.4
+    , servant >=0.14.1 && <0.15
+    , servant-mock >=0.8.4 && <0.9
+    , servant-server >=0.14.1 && <0.15
+    , text >=1.2.3.1 && <1.3
+    , time >=1.8.0.2 && <1.10
+  default-language: Haskell2010
+
+executable demo
+  main-is: Main.hs
+  other-modules:
+      Paths_scale_by_the_bay
+  hs-source-dirs:
+      executables
+  default-extensions: ConstraintKinds DataKinds DeriveGeneric FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs LambdaCase OverloadedStrings PatternSynonyms QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeApplications TypeFamilies TypeOperators ViewPatterns
+  ghc-options: -fwarn-tabs -fhide-source-paths -fprint-potential-instances -optP-Wno-nonportable-include-path -Wall -Wcpp-undef -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wno-unused-do-bind -Wno-deprecations -Wno-monomorphism-restriction -Wno-unticked-promoted-constructors -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , scale-by-the-bay
+  default-language: Haskell2010
+
+test-suite tests
+  type: exitcode-stdio-1.0
+  main-is: Driver.hs
+  other-modules:
+      Paths_scale_by_the_bay
+  hs-source-dirs:
+      test
+  default-extensions: ConstraintKinds DataKinds DeriveGeneric FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs LambdaCase OverloadedStrings PatternSynonyms QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TemplateHaskell TypeApplications TypeFamilies TypeOperators ViewPatterns
+  ghc-options: -fwarn-tabs -fhide-source-paths -fprint-potential-instances -optP-Wno-nonportable-include-path -Wall -Wcpp-undef -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wno-unused-do-bind -Wno-deprecations -Wno-monomorphism-restriction -Wno-unticked-promoted-constructors -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , hspec >=2.5.5 && <2.7
+    , hspec-discover >=2.5.5 && <2.7
+    , hspec-golden-aeson >=0.7.0.0 && <0.8
+    , scale-by-the-bay
+    , servant-quickcheck >=0.0.7.3 && <0.1
+  default-language: Haskell2010

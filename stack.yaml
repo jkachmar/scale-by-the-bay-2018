@@ -1,0 +1,10 @@
+resolver: lts-12.17
+extra-deps:
+  - aeson-1.4.1.0
+  - hspec-2.5.9
+  - hspec-core-2.5.9
+  - hspec-discover-2.5.9
+  - QuickCheck-2.12.6.1
+  - servant-quickcheck-0.0.7.3
+packages:
+  - .
