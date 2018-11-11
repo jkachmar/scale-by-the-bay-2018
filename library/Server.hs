@@ -1,26 +1,31 @@
+{-# LANGUAGE PartialTypeSignatures #-}
+
 module Server where
 
-import           Data.Aeson.Encode.Pretty
-
 -- Miscellaneous external modules
+import           Control.Monad.IO.Class
 import           Data.Aeson
-import qualified Data.ByteString.Lazy          as LBS
-import           Data.Proxy
-import           Data.Text                     (Text)
+import           Data.Aeson.Encode.Pretty
+import qualified Data.ByteString.Lazy                 as LBS
+import           Data.Text                            (Text)
 import           Data.Time
 import           GHC.Generics
 
 -- Random data generation modules
-import           Generic.Random                (genericArbitraryRec,
-                                                genericArbitraryU, uniform,
-                                                withBaseCase)
-import           Test.QuickCheck               (Arbitrary (..), Gen, generate)
-import           Test.QuickCheck.Arbitrary.ADT (ToADTArbitrary)
-import           Test.QuickCheck.Instances     ()
+import           Generic.Random                       (genericArbitraryRec,
+                                                       genericArbitraryU,
+                                                       uniform, withBaseCase)
+import           Test.QuickCheck                      (Arbitrary (..), Gen,
+                                                       generate)
+import           Test.QuickCheck.Arbitrary.ADT        (ToADTArbitrary)
+import           Test.QuickCheck.Instances            ()
 
--- Servant modules
+-- Web server modules
+import           Network.Wai.Handler.Warp             (run)
+import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Servant.API
 import           Servant.API.Generic
+import           Servant.Server.Generic
 
 --------------------------------------------------------------------------------
 -- Application data model, JSON serialization, and arbitrary data generation
@@ -160,7 +165,7 @@ instance Arbitrary Admin where
 instance ToADTArbitrary Admin
 
 --------------------------------------------------------------------------------
--- Helper functions to demosntrate arbitrary generation of datatypes _and_ their
+-- Helper functions to demosntrat arbitrary generation of datatypes _and_ their
 -- generically derived JSON encoders/decoders
 
 arbitraryUserJson :: IO LBS.ByteString
@@ -264,7 +269,7 @@ adminJsonOptions
     fieldLabelModifier = camelTo2 '_' . drop 1
   }
 
--}
+-- -}
 
 --------------------------------------------------------------------------------
 -- Servant routing and web server
@@ -288,7 +293,7 @@ adminJsonOptions
 data UserRoutes route
   = UserRoutes
   -- Equivalent to a "/users" route that accepts GET requests and returns JSON
-  { _getUsers :: route
+  { getUsers :: route
       :- Summary "Get a list of all users."
       :> Description "Get a list of all users currently registered with this \
                      \service."
@@ -296,7 +301,7 @@ data UserRoutes route
 
   -- Equivalent to a "/users/basic" route that accepts GET requests and returns
   -- JSON
-  , _getBasicUsers :: route
+  , getBasicUsers :: route
       :- Summary "Get a list of all 'basic' users."
       :> Description "Get a list of all users currently registered with this \
                      \service who are not moderators or administrators."
@@ -304,7 +309,7 @@ data UserRoutes route
 
   -- Equivalent to a "/users/moderators" route that accepts GET requests and
   -- returns JSON
-  , _getModerators :: route
+  , getModerators :: route
       :- Summary "Get a list of all moderators."
       :> Description "Get a list of all users classified as moderators \
                      \currently registered with this service."
@@ -312,28 +317,42 @@ data UserRoutes route
 
   -- Equivalent to a "/users/admins" route that accepts GET requests and
   -- returns JSON
-  , _getAdmins :: route
+  , getAdmins :: route
       :- Summary "Get a list of all admins."
       :> Description "Get a list of all users classified as administrators \
                      \currently registered with this service."
       :> "users" :> "admins" :> Get '[JSON] [Admin]
   } deriving Generic
 
--- | The API contract for all routes associated with this specification.
+
+-- | A record of handlers corresponding to each of API routes specified in
+-- | `UserRoutes`.
+userRouteHandlers :: UserRoutes AsServer
+userRouteHandlers = UserRoutes
+  { getUsers      = liftIO $ generate arbitrary
+  , getBasicUsers = liftIO $ generate arbitrary
+  , getModerators = liftIO $ generate arbitrary
+  , getAdmins     = liftIO $ generate arbitrary
+  }
+
+-- | The API specification for all routes in the application.
 -- |
 -- | Note that the `Routes` record can, itself, contain route specifications.
 -- | This allows users to factor out components of the API type into different
 -- | modules as necessary (e.g. to separate concerns, version sub-routes, etc.)
 data Routes route
   = Routes
-  { _v1Routes :: route :- "v1" :> (ToServantApi UserRoutes)
+  { v1Routes :: route :- "v1" :> (ToServantApi UserRoutes)
   } deriving Generic
 
--- | A value "containing" the API contract as defined by the `Routes` type.
-routes :: Proxy (ToServantApi Routes)
-routes = genericApi (Proxy @Routes)
+-- | A record of handlers corresponding to each of API routes specified in
+-- | `Routes`.
+routeHandlers :: Routes AsServer
+routeHandlers = Routes
+  { v1Routes = genericServer userRouteHandlers
+  }
 
 --------------------------------------------------------------------------------
 -- | The entry point for the application.
 runServer :: IO ()
-runServer = putStrLn "Please finish writing me!"
+runServer = run 8080 . logStdoutDev $ genericServe routeHandlers
