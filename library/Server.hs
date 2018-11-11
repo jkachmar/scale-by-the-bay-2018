@@ -23,6 +23,8 @@ import           Servant.API
 import           Servant.API.Generic
 
 --------------------------------------------------------------------------------
+-- Application data model, JSON serialization, and arbitrary data generation
+--------------------------------------------------------------------------------
 -- | A user within the service, who must be one of the `Admin`, `Moderator` or
 -- | `BasicUser` types.
 data User
@@ -34,27 +36,8 @@ data User
 -- Aeson typeclass instances that automatically derive JSON de/serialization
 -- methods for `User` using the datatype's automatically derived `Generic`
 -- instance
-
-instance FromJSON User where
-  parseJSON = genericParseJSON userJsonOptions
-
-instance ToJSON User where
-  toJSON = genericToJSON userJsonOptions
-
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `User`s.
-userJsonOptions :: Options
-userJsonOptions
-  = defaultOptions
-  { -- TODO(jkachmar): Explain what this option does
-    sumEncoding = ObjectWithSingleField
-    -- TODO(jkachmar): Explain what this option modifies
-  , constructorTagModifier =
-      -- Filters out any ' characters, which are used in `User`, but not useful
-      -- to leak into our JSON codecs
-      let dropTicks = filter $ not . \char -> (char == '\'')
-      in camelTo2 '_' . dropTicks
-  }
+instance FromJSON User
+instance ToJSON User
 
 -- An `Arbitrary` instance for `User` that automatically derives the typeclass
 -- methods required to generate random `User`s using the datatype's
@@ -80,20 +63,8 @@ data BasicUser
 -- Aeson typeclass instances that automatically derive JSON de/serialization
 -- methods for `BasicUser` using the datatype's automatically derived `Generic`
 -- instance
-instance FromJSON BasicUser where
-  parseJSON = genericParseJSON basicUserJsonOptions
-
-instance ToJSON BasicUser where
-  toJSON = genericToJSON basicUserJsonOptions
-
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `BasicUser`s.
-basicUserJsonOptions :: Options
-basicUserJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("bu" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 2
-  }
+instance FromJSON BasicUser
+instance ToJSON BasicUser
 
 -- An `Arbitrary` instance for `BasicUser` that automatically derives the
 -- typeclass methods required to generate random `BasicUser`s using the
@@ -125,20 +96,8 @@ data Moderator
 -- Aeson typeclass instances that automatically derive JSON de/serialization
 -- methods for `Moderator` using the datatype's automatically derived `Generic`
 -- instance
-instance FromJSON Moderator where
-  parseJSON = genericParseJSON moderatorJsonOptions
-
-instance ToJSON Moderator where
-  toJSON = genericToJSON moderatorJsonOptions
-
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `Moderator`s.
-moderatorJsonOptions :: Options
-moderatorJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("m" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 1
-  }
+instance FromJSON Moderator
+instance ToJSON Moderator
 
 -- An `Arbitrary` instance for `Moderator` that automatically derives the
 -- typeclass methods required to generate random `Moderator`s using the
@@ -172,20 +131,8 @@ data Admin
 -- Aeson typeclass instances that automatically derive JSON de/serialization
 -- methods for `Admin` using the datatype's automatically derived `Generic`
 -- instance
-instance FromJSON Admin where
-  parseJSON = genericParseJSON adminJsonOptions
-
-instance ToJSON Admin where
-  toJSON = genericToJSON adminJsonOptions
-
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `Admin`s.
-adminJsonOptions :: Options
-adminJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("a" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 1
-  }
+instance FromJSON Admin
+instance ToJSON Admin
 
 -- An `Arbitrary` instance for `Admin` that automatically derives the typeclass
 -- methods required to generate random `Admin`s using the datatype's
@@ -212,8 +159,9 @@ instance Arbitrary Admin where
 -- for more complex algebraic data types.
 instance ToADTArbitrary Admin
 
--- Demonstrate both arbitrary generation of datatypes _and_ generically
--- derived JSON encoders/decoders
+--------------------------------------------------------------------------------
+-- Helper functions to demosntrate arbitrary generation of datatypes _and_ their
+-- generically derived JSON encoders/decoders
 
 arbitraryUserJson :: IO LBS.ByteString
 arbitraryUserJson = do
@@ -233,8 +181,95 @@ printArbitraryDecodedUser = do
     Nothing   -> print ("Failed to decode a User!" :: Text)
     Just user -> print user
 
+{-
+
 --------------------------------------------------------------------------------
--- | The API contract for all routes associated with a `User`.
+-- Modified Generic JSON serialiation and deserialization
+--------------------------------------------------------------------------------
+
+-- JSON serialization and deserialization typeclass instances for `User`s,
+-- slightly modified to produce more idiomatic JSON output
+instance FromJSON User where
+  parseJSON = genericParseJSON userJsonOptions
+
+instance ToJSON User where
+  toJSON = genericToJSON userJsonOptions
+
+-- | Modifications to Aeson's generic JSON encoding/decoding features for
+-- | `User`s.
+userJsonOptions :: Options
+userJsonOptions
+  = defaultOptions
+  { -- TODO(jkachmar): Explain what this option does
+    sumEncoding = ObjectWithSingleField
+    -- TODO(jkachmar): Explain what this option modifies
+  , constructorTagModifier =
+      -- Filters out any ' characters, which are used in `User`, but not useful
+      -- to leak into our JSON codecs
+      let dropTicks = filter $ not . \char -> (char == '\'')
+      in camelTo2 '_' . dropTicks
+  }
+
+--------------------------------------------------------------------------------
+-- JSON serialization and deserialization typeclass instances for `User`s,
+-- slightly modified to produce more idiomatic JSON output
+instance FromJSON BasicUser where
+  parseJSON = genericParseJSON basicUserJsonOptions
+
+instance ToJSON BasicUser where
+  toJSON = genericToJSON basicUserJsonOptions
+
+-- | Modifications to Aeson's generic JSON encoding/decoding features for
+-- | `BasicUser`s.
+basicUserJsonOptions :: Options
+basicUserJsonOptions
+  = defaultOptions
+  { -- Drop the leading 2 chars ("bu" prefix) and convert to snake_case
+    fieldLabelModifier = camelTo2 '_' . drop 2
+  }
+
+--------------------------------------------------------------------------------
+-- JSON serialization and deserialization typeclass instances for
+-- `Moderator`s, slightly modified to produce more idiomatic JSON output
+instance FromJSON Moderator where
+  parseJSON = genericParseJSON moderatorJsonOptions
+
+instance ToJSON Moderator where
+  toJSON = genericToJSON moderatorJsonOptions
+
+-- | Modifications to Aeson's generic JSON encoding/decoding features for
+-- | `Moderator`s.
+moderatorJsonOptions :: Options
+moderatorJsonOptions
+  = defaultOptions
+  { -- Drop the leading 2 chars ("m" prefix) and convert to snake_case
+    fieldLabelModifier = camelTo2 '_' . drop 1
+  }
+
+--------------------------------------------------------------------------------
+-- JSON serialization and deserialization typeclass instances for `Admin`s,
+-- slightly modified to produce more idiomatic JSON output
+instance FromJSON Admin where
+  parseJSON = genericParseJSON adminJsonOptions
+
+instance ToJSON Admin where
+  toJSON = genericToJSON adminJsonOptions
+
+-- | Modifications to Aeson's generic JSON encoding/decoding features for
+-- | `Admin`s.
+adminJsonOptions :: Options
+adminJsonOptions
+  = defaultOptions
+  { -- Drop the leading 2 chars ("a" prefix) and convert to snake_case
+    fieldLabelModifier = camelTo2 '_' . drop 1
+  }
+
+-}
+
+--------------------------------------------------------------------------------
+-- Servant routing and web server
+--------------------------------------------------------------------------------
+-- | The API specification for all routes associated with a `User`.
 -- |
 -- | An API's route specification is defined as a record of type-level route
 -- | definitions.
@@ -256,7 +291,7 @@ data UserRoutes route
   { _getUsers :: route
       :- Summary "Get a list of all users."
       :> Description "Get a list of all users currently registered with this \
-                     \service"
+                     \service."
       :> "users" :> Get '[JSON] [User]
 
   -- Equivalent to a "/users/basic" route that accepts GET requests and returns
