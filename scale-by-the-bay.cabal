@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7a1b3b980ed1b75317b25c341e5b4722726a52a8d31e0ce59c7b7c90ef331041
+-- hash: e61334fcb11f3c65fd320a6077a1fed8ce73493e2ac2899718061e2b0b17dd61
 
 name:           scale-by-the-bay
 version:        0.1.0
@@ -41,6 +41,7 @@ library
     , base >=4.7 && <5
     , bytestring >=0.10.8.2 && <0.11
     , generic-random >=1.2.0.0 && <1.3
+    , quickcheck-arbitrary-adt >=0.3.1.0 && <0.4
     , quickcheck-instances >=0.3.19 && <0.4
     , servant >=0.14.1 && <0.15
     , servant-mock >=0.8.4 && <0.9
@@ -66,6 +67,8 @@ test-suite tests
   type: exitcode-stdio-1.0
   main-is: Driver.hs
   other-modules:
+      Test.JSONSpec
+      Test.ServerSpec
       Paths_scale_by_the_bay
   hs-source-dirs:
       tests
