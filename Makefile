@@ -23,7 +23,7 @@ build:
 # dirtiness
 build-dirty:
 	$(stack) build $(package) \
-	--ghc-options='$(ghc_opts)'
+	--ghc-options='$(ghc_opts)' \
 	--force-dirty
 
 # Fast build (implies O0 optimizations)
