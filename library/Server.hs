@@ -1,5 +1,3 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-
 module Server where
 
 -- Miscellaneous external modules
