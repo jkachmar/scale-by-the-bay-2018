@@ -49,6 +49,11 @@ instance Arbitrary User where
   arbitrary :: Gen User
   arbitrary = genericArbitraryU
 
+-- A `ToADTArbitrary` instance for `User`, which helps create arbitrary values
+-- every constructor in an algebraic data type.
+--
+-- This is especially useful for sum types, so that there's a guarantee that
+-- all branches of the sum are properly tested.
 instance ToADTArbitrary User
 
 --------------------------------------------------------------------------------
@@ -75,10 +80,6 @@ instance ToJSON BasicUser
 instance Arbitrary BasicUser where
   arbitrary :: Gen BasicUser
   arbitrary = genericArbitraryU
-
--- A typeclass instance for `BasicUser` that helps us create `Arbitrary`
--- instances for more complex algebraic data types.
-instance ToADTArbitrary BasicUser
 
 --------------------------------------------------------------------------------
 -- | A moderator within the service, containing a list of sub-communities that
@@ -108,10 +109,6 @@ instance ToJSON Moderator
 instance Arbitrary Moderator where
   arbitrary :: Gen Moderator
   arbitrary = genericArbitraryU
-
--- A typeclass instance for `Moderator` that helps us create `Arbitrary`
--- instances for more complex algebraic data types.
-instance ToADTArbitrary Moderator
 
 --------------------------------------------------------------------------------
 -- | An administrator of the service, containing an optional field for the
@@ -157,10 +154,6 @@ instance Arbitrary Admin where
         <*> arbitrary
         <*> arbitrary
         <*> arbitrary
-
--- A typeclass instance for `Admin` that helps us create `Arbitrary` instances
--- for more complex algebraic data types.
-instance ToADTArbitrary Admin
 
 --------------------------------------------------------------------------------
 -- Helper functions to demosntrat arbitrary generation of datatypes _and_ their

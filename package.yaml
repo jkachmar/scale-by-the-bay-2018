@@ -55,8 +55,11 @@ default-extensions:
   - TypeOperators
   - ViewPatterns
 
+# Dependencies common to all modules
 dependencies:
-  - base >= 4.7 && < 5
+  - base           >= 4.7    && < 5
+  - servant        >= 0.14.1 && < 0.15
+  - servant-server >= 0.14.1 && < 0.15
 
 library:
   source-dirs: library
@@ -73,9 +76,6 @@ library:
     - quickcheck-instances     >= 0.3.19   && < 0.4
 
     # Web server libraries
-    - servant                  >= 0.14.1   && < 0.15
-    - servant-mock             >= 0.8.4    && < 0.9
-    - servant-server           >= 0.14.1   && < 0.15
     - warp                     >= 3.2.25   && < 3.3
     - wai-extra                >= 3.0.24.3 && < 3.1
 
@@ -87,7 +87,7 @@ executables:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
-    # The only dependency to build the executable is our library
+    # The only dependency required to build the executable is the library
     dependencies: scale-by-the-bay
 
 tests:
@@ -99,7 +99,7 @@ tests:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      # Our library, to-be-tested
+      # This project's library, to-be-tested
       - scale-by-the-bay
 
       # External test support libraries

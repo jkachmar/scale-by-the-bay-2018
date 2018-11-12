@@ -10,15 +10,8 @@ import           Server                  (Admin, BasicUser, Moderator, User)
 
 spec :: Spec
 spec = do
-  describe "Round Trip JSON tests" $ do
-    context "for the User data type" $
-      roundtripADTSpecs (Proxy @User)
-
-    context "for the BasicUser data type" $
-      roundtripADTSpecs (Proxy @BasicUser)
-
-    context "for the Moderator data type" $
-      roundtripADTSpecs (Proxy @Moderator)
-
-    context "for the Admin data type" $
-      roundtripADTSpecs (Proxy @Admin)
+  describe "roundtrip tests" $ do
+    roundtripADTSpecs (Proxy @User)
+    roundtripSpecs (Proxy @BasicUser)
+    roundtripSpecs (Proxy @Moderator)
+    roundtripSpecs (Proxy @Admin)
