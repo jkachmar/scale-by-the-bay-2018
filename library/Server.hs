@@ -26,7 +26,7 @@ import           Servant.API.Generic
 import           Servant.Server.Generic
 
 --------------------------------------------------------------------------------
--- Application data model, JSON serialization, and arbitrary data generation
+-- Application data model
 --------------------------------------------------------------------------------
 -- | A user within the service, who must be one of the `Admin`, `Moderator` or
 -- | `BasicUser` types.
@@ -36,27 +36,6 @@ data User
   | BasicUser' !BasicUser
   deriving (Eq, Generic, Show)
 
--- Aeson typeclass instances that automatically derive JSON de/serialization
--- methods for `User` using the datatype's automatically derived `Generic`
--- instance
-instance FromJSON User
-instance ToJSON User
-
--- An `Arbitrary` instance for `User` that automatically derives the typeclass
--- methods required to generate random `User`s using the datatype's
--- automatically derived `Generic` instance.
-instance Arbitrary User where
-  arbitrary :: Gen User
-  arbitrary = genericArbitraryU
-
--- A `ToADTArbitrary` instance for `User`, which helps create arbitrary values
--- every constructor in an algebraic data type.
---
--- This is especially useful for sum types, so that there's a guarantee that
--- all branches of the sum are properly tested.
-instance ToADTArbitrary User
-
---------------------------------------------------------------------------------
 -- | A "basic" user within the service.
 data BasicUser
   = BasicUser
@@ -68,20 +47,6 @@ data BasicUser
   , buUpdatedAt    :: !UTCTime
   } deriving (Eq, Generic, Show)
 
--- Aeson typeclass instances that automatically derive JSON de/serialization
--- methods for `BasicUser` using the datatype's automatically derived `Generic`
--- instance
-instance FromJSON BasicUser
-instance ToJSON BasicUser
-
--- An `Arbitrary` instance for `BasicUser` that automatically derives the
--- typeclass methods required to generate random `BasicUser`s using the
--- datatype's automatically derived `Generic` instance.
-instance Arbitrary BasicUser where
-  arbitrary :: Gen BasicUser
-  arbitrary = genericArbitraryU
-
---------------------------------------------------------------------------------
 -- | A moderator within the service, containing a list of sub-communities that
 -- | they are responsible for governing, as well as a record of the `Admin` who
 -- | promoted them to moderatorship.
@@ -97,20 +62,6 @@ data Moderator
   , mUpdatedAt    :: !UTCTime
   } deriving (Eq, Generic, Show)
 
--- Aeson typeclass instances that automatically derive JSON de/serialization
--- methods for `Moderator` using the datatype's automatically derived `Generic`
--- instance
-instance FromJSON Moderator
-instance ToJSON Moderator
-
--- An `Arbitrary` instance for `Moderator` that automatically derives the
--- typeclass methods required to generate random `Moderator`s using the
--- datatype's automatically derived `Generic` instance.
-instance Arbitrary Moderator where
-  arbitrary :: Gen Moderator
-  arbitrary = genericArbitraryU
-
---------------------------------------------------------------------------------
 -- | An administrator of the service, containing an optional field for the
 -- | `Admin` who promoted them.
 -- |
@@ -128,19 +79,26 @@ data Admin
   , aUpdatedAt    :: !UTCTime
   } deriving (Eq, Generic, Show)
 
--- Aeson typeclass instances that automatically derive JSON de/serialization
--- methods for `Admin` using the datatype's automatically derived `Generic`
--- instance
-instance FromJSON Admin
-instance ToJSON Admin
+--------------------------------------------------------------------------------
+-- Arbitrary data generation typeclass instances
+--------------------------------------------------------------------------------
+instance Arbitrary User where
+  arbitrary :: Gen User
+  arbitrary = genericArbitraryU
 
--- An `Arbitrary` instance for `Admin` that automatically derives the typeclass
--- methods required to generate random `Admin`s using the datatype's
--- automatically derived `Generic` instance.
---
--- Note that since `Admin` can potentially contain another `Admin` within
--- itself, a "base case" is provided that explicitly does _not_ contain an
--- `Admin`.
+-- `ToADTArbitrary` creates arbitrary values for every constructor in an ADT
+instance ToADTArbitrary User
+
+instance Arbitrary BasicUser where
+  arbitrary :: Gen BasicUser
+  arbitrary = genericArbitraryU
+
+instance Arbitrary Moderator where
+  arbitrary :: Gen Moderator
+  arbitrary = genericArbitraryU
+
+-- Because `Admin` can recursively contain more `Admin`s, a "base case" is
+-- provided that explicitly does _not_ contain an `Admin`
 instance Arbitrary Admin where
   arbitrary :: Gen Admin
   arbitrary = genericArbitraryRec uniform `withBaseCase` baseAdminCase
@@ -156,35 +114,26 @@ instance Arbitrary Admin where
         <*> arbitrary
 
 --------------------------------------------------------------------------------
--- Helper functions to demosntrat arbitrary generation of datatypes _and_ their
--- generically derived JSON encoders/decoders
+-- JSON serialization/deserialization typeclass instances
+--------------------------------------------------------------------------------
+-- instance FromJSON User
+-- instance ToJSON User
 
-arbitraryUserJson :: IO LBS.ByteString
-arbitraryUserJson = do
-  arbitraryUser :: User <- generate arbitrary
-  pure (encodePretty arbitraryUser)
+-- instance FromJSON User
+-- instance ToJSON User
 
-printArbitraryEncodedUser :: IO ()
-printArbitraryEncodedUser = do
-  encodedUser <- arbitraryUserJson
-  LBS.putStrLn encodedUser
+-- instance FromJSON BasicUser
+-- instance ToJSON BasicUser
 
-printArbitraryDecodedUser :: IO ()
-printArbitraryDecodedUser = do
-  encodedUser <- arbitraryUserJson
-  let (maybeUser :: Maybe User) = decode encodedUser
-  case maybeUser of
-    Nothing   -> print ("Failed to decode a User!" :: Text)
-    Just user -> print user
+-- instance FromJSON Moderator
+-- instance ToJSON Moderator
 
-{-
+-- instance FromJSON Admin
+-- instance ToJSON Admin
 
 --------------------------------------------------------------------------------
--- Modified Generic JSON serialiation and deserialization
+-- Modified JSON serialization/deserialization typeclass instances
 --------------------------------------------------------------------------------
-
--- JSON serialization and deserialization typeclass instances for `User`s,
--- slightly modified to produce more idiomatic JSON output
 instance FromJSON User where
   parseJSON = genericParseJSON userJsonOptions
 
@@ -206,9 +155,6 @@ userJsonOptions
       in camelTo2 '_' . dropTicks
   }
 
---------------------------------------------------------------------------------
--- JSON serialization and deserialization typeclass instances for `User`s,
--- slightly modified to produce more idiomatic JSON output
 instance FromJSON BasicUser where
   parseJSON = genericParseJSON basicUserJsonOptions
 
@@ -224,9 +170,6 @@ basicUserJsonOptions
     fieldLabelModifier = camelTo2 '_' . drop 2
   }
 
---------------------------------------------------------------------------------
--- JSON serialization and deserialization typeclass instances for
--- `Moderator`s, slightly modified to produce more idiomatic JSON output
 instance FromJSON Moderator where
   parseJSON = genericParseJSON moderatorJsonOptions
 
@@ -242,17 +185,12 @@ moderatorJsonOptions
     fieldLabelModifier = camelTo2 '_' . drop 1
   }
 
---------------------------------------------------------------------------------
--- JSON serialization and deserialization typeclass instances for `Admin`s,
--- slightly modified to produce more idiomatic JSON output
 instance FromJSON Admin where
   parseJSON = genericParseJSON adminJsonOptions
 
 instance ToJSON Admin where
   toJSON = genericToJSON adminJsonOptions
 
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `Admin`s.
 adminJsonOptions :: Options
 adminJsonOptions
   = defaultOptions
@@ -260,20 +198,17 @@ adminJsonOptions
     fieldLabelModifier = camelTo2 '_' . drop 1
   }
 
--- -}
-
 --------------------------------------------------------------------------------
--- Servant routing and web server
+-- Routes and web server
 --------------------------------------------------------------------------------
 -- | The API specification for all routes associated with a `User`.
 -- |
 -- | An API's route specification is defined as a record of type-level route
 -- | definitions.
 -- |
--- | A brief summary of the symbols involved:
+-- | A brief summary of some symbols involved:
 -- |
--- | (:-) - Boilerplate that helps the framework resolve the type following it
--- | as either a standalone Route or an internal Link to another resource.
+-- | (:-) - Boilerplate that helps Servant resolve the routing type.
 -- |
 -- | (:>) - A generic resource separator, this symbol is used to separate logical
 -- | components of the API type, such as path segments, capture groups, query
@@ -315,7 +250,6 @@ data UserRoutes route
       :> "users" :> "admins" :> Get '[JSON] [Admin]
   } deriving Generic
 
-
 -- | A record of handlers corresponding to each of API routes specified in
 -- | `UserRoutes`.
 userRouteHandlers :: UserRoutes AsServer
@@ -347,3 +281,25 @@ routeHandlers = Routes
 -- | The entry point for the application.
 runServer :: IO ()
 runServer = run 8080 . logStdoutDev $ genericServe routeHandlers
+
+--------------------------------------------------------------------------------
+-- Helper functions to demonstrate arbitrary generation of datatypes _and_ their
+-- generically derived JSON encoders/decoders
+
+arbitraryUserJson :: IO LBS.ByteString
+arbitraryUserJson = do
+  arbitraryUser :: User <- generate arbitrary
+  pure (encodePretty arbitraryUser)
+
+printArbitraryEncodedUser :: IO ()
+printArbitraryEncodedUser = do
+  encodedUser <- arbitraryUserJson
+  LBS.putStrLn encodedUser
+
+printArbitraryDecodedUser :: IO ()
+printArbitraryDecodedUser = do
+  encodedUser <- arbitraryUserJson
+  let (maybeUser :: Maybe User) = decode encodedUser
+  case maybeUser of
+    Nothing   -> print ("Failed to decode a User!" :: Text)
+    Just user -> print user
