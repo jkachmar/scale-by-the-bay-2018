@@ -74,6 +74,7 @@ library:
     - QuickCheck               >= 2.11.3   && < 2.13
     - quickcheck-arbitrary-adt >= 0.3.1.0  && < 0.4
     - quickcheck-instances     >= 0.3.19   && < 0.4
+    - pretty-simple            >= 2.1.0.1  && < 2.3
 
     # Web server libraries
     - warp                     >= 3.2.25   && < 3.3

@@ -8,6 +8,7 @@ import qualified Data.ByteString.Lazy                 as LBS
 import           Data.Text                            (Text)
 import           Data.Time
 import           GHC.Generics
+import           Text.Pretty.Simple
 
 -- Random data generation modules
 import           Generic.Random                       (genericArbitraryRec,
@@ -116,87 +117,58 @@ instance Arbitrary Admin where
 --------------------------------------------------------------------------------
 -- JSON serialization/deserialization typeclass instances
 --------------------------------------------------------------------------------
--- instance FromJSON User
--- instance ToJSON User
+instance FromJSON User
+instance ToJSON User
 
--- instance FromJSON User
--- instance ToJSON User
+instance FromJSON BasicUser
+instance ToJSON BasicUser
 
--- instance FromJSON BasicUser
--- instance ToJSON BasicUser
+instance FromJSON Moderator
+instance ToJSON Moderator
 
--- instance FromJSON Moderator
--- instance ToJSON Moderator
-
--- instance FromJSON Admin
--- instance ToJSON Admin
+instance FromJSON Admin
+instance ToJSON Admin
 
 --------------------------------------------------------------------------------
 -- Modified JSON serialization/deserialization typeclass instances
 --------------------------------------------------------------------------------
-instance FromJSON User where
-  parseJSON = genericParseJSON userJsonOptions
+-- -- | Modifications to Aeson's generic JSON encoders/decoders to make the output
+-- -- | JSON a little more idiomatic.
+-- idiomaticJsonOptions :: (String -> String) -> Options
+-- idiomaticJsonOptions f = defaultOptions
+--   { constructorTagModifier = camelTo2 '_' . filter (not . (== '\''))
+--   , fieldLabelModifier = camelTo2 '_' . f
+--   , sumEncoding = ObjectWithSingleField
+--   , tagSingleConstructors = True
+--   }
 
-instance ToJSON User where
-  toJSON = genericToJSON userJsonOptions
+-- instance FromJSON User where
+--   parseJSON = genericParseJSON $ (idiomaticJsonOptions id)
+--     { sumEncoding = UntaggedValue
+--     }
 
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `User`s.
-userJsonOptions :: Options
-userJsonOptions
-  = defaultOptions
-  { -- TODO(jkachmar): Explain what this option does
-    sumEncoding = ObjectWithSingleField
-    -- TODO(jkachmar): Explain what this option modifies
-  , constructorTagModifier =
-      -- Filters out any ' characters, which are used in `User`, but not useful
-      -- to leak into our JSON codecs
-      let dropTicks = filter $ not . \char -> (char == '\'')
-      in camelTo2 '_' . dropTicks
-  }
+-- instance ToJSON User where
+--   toJSON = genericToJSON (idiomaticJsonOptions id)
+--     { sumEncoding = UntaggedValue
+--     }
 
-instance FromJSON BasicUser where
-  parseJSON = genericParseJSON basicUserJsonOptions
+-- instance FromJSON BasicUser where
+--   parseJSON = genericParseJSON (idiomaticJsonOptions (drop 2))
 
-instance ToJSON BasicUser where
-  toJSON = genericToJSON basicUserJsonOptions
+-- instance ToJSON BasicUser where
+--   toJSON = genericToJSON (idiomaticJsonOptions (drop 2))
 
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `BasicUser`s.
-basicUserJsonOptions :: Options
-basicUserJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("bu" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 2
-  }
+-- instance FromJSON Moderator where
+--   parseJSON = genericParseJSON (idiomaticJsonOptions (drop 1))
 
-instance FromJSON Moderator where
-  parseJSON = genericParseJSON moderatorJsonOptions
+-- instance ToJSON Moderator where
+--   toJSON = genericToJSON (idiomaticJsonOptions (drop 1))
 
-instance ToJSON Moderator where
-  toJSON = genericToJSON moderatorJsonOptions
+-- instance FromJSON Admin where
+--   parseJSON = genericParseJSON (idiomaticJsonOptions (drop 1))
 
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `Moderator`s.
-moderatorJsonOptions :: Options
-moderatorJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("m" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 1
-  }
-
-instance FromJSON Admin where
-  parseJSON = genericParseJSON adminJsonOptions
-
-instance ToJSON Admin where
-  toJSON = genericToJSON adminJsonOptions
-
-adminJsonOptions :: Options
-adminJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("a" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 1
-  }
+-- instance ToJSON Admin where
+--   toJSON = genericToJSON (idiomaticJsonOptions (drop 1))
 
 --------------------------------------------------------------------------------
 -- Routes and web server
@@ -302,4 +274,4 @@ printArbitraryDecodedUser = do
   let (maybeUser :: Maybe User) = decode encodedUser
   case maybeUser of
     Nothing   -> print ("Failed to decode a User!" :: Text)
-    Just user -> print user
+    Just user -> pPrint user
