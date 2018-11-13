@@ -65,10 +65,6 @@ data Moderator
 
 -- | An administrator of the service, containing an optional field for the
 -- | `Admin` who promoted them.
--- |
--- | Note that `Admin` is a recursive data structure! `Admin`s may have either
--- | been promoted by another `Admin`, or created with administrator status
--- | when the server was initialized.
 data Admin
   = Admin
   { aUsername     :: !Text
@@ -174,20 +170,6 @@ instance ToJSON Admin
 -- Routes and web server
 --------------------------------------------------------------------------------
 -- | The API specification for all routes associated with a `User`.
--- |
--- | An API's route specification is defined as a record of type-level route
--- | definitions.
--- |
--- | A brief summary of some symbols involved:
--- |
--- | (:-) - Boilerplate that helps Servant resolve the routing type.
--- |
--- | (:>) - A generic resource separator, this symbol is used to separate logical
--- | components of the API type, such as path segments, capture groups, query
--- | parameters, request body, etc.
--- |
--- | ('[JSON, HTML]) - A list of MIME types that the route can handle, either as
--- | a request or a response.
 data UserRoutes route
   = UserRoutes
   -- Equivalent to a "/users" route that accepts GET requests and returns JSON
@@ -233,10 +215,6 @@ userRouteHandlers = UserRoutes
   }
 
 -- | The API specification for all routes in the application.
--- |
--- | Note that the `Routes` record can, itself, contain route specifications.
--- | This allows users to factor out components of the API type into different
--- | modules as necessary (e.g. to separate concerns, version sub-routes, etc.)
 data Routes route
   = Routes
   { v1Routes :: route :- "v1" :> (ToServantApi UserRoutes)
