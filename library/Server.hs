@@ -8,6 +8,7 @@ import qualified Data.ByteString.Lazy                 as LBS
 import           Data.Text                            (Text)
 import           Data.Time
 import           GHC.Generics
+import           Text.Pretty.Simple
 
 -- Random data generation modules
 import           Generic.Random                       (genericArbitraryRec,
@@ -26,7 +27,7 @@ import           Servant.API.Generic
 import           Servant.Server.Generic
 
 --------------------------------------------------------------------------------
--- Application data model, JSON serialization, and arbitrary data generation
+-- Application data model
 --------------------------------------------------------------------------------
 -- | A user within the service, who must be one of the `Admin`, `Moderator` or
 -- | `BasicUser` types.
@@ -36,81 +37,6 @@ data User
   | BasicUser' !BasicUser
   deriving (Eq, Generic, Show)
 
--- Aeson typeclass instances that automatically derive JSON de/serialization
--- methods for `User` using the datatype's automatically derived `Generic`
--- instance
-instance FromJSON User
-instance ToJSON User
-
--- An `Arbitrary` instance for `User` that automatically derives the typeclass
--- methods required to generate random `User`s using the datatype's
--- automatically derived `Generic` instance.
-instance Arbitrary User where
-  arbitrary :: Gen User
-  arbitrary = genericArbitraryU
-
--- A `ToADTArbitrary` instance for `User`, which helps create arbitrary values
--- every constructor in an algebraic data type.
---
--- This is especially useful for sum types, so that there's a guarantee that
--- all branches of the sum are properly tested.
-instance ToADTArbitrary User
-
---------------------------------------------------------------------------------
--- | A "basic" user within the service.
-data BasicUser
-  = BasicUser
-  { buUsername     :: !Text
-  , buPassword     :: !Text
-  , buEmailAddress :: !Text
-  , buActive       :: !Bool
-  , buCreatedAt    :: !UTCTime
-  , buUpdatedAt    :: !UTCTime
-  } deriving (Eq, Generic, Show)
-
--- Aeson typeclass instances that automatically derive JSON de/serialization
--- methods for `BasicUser` using the datatype's automatically derived `Generic`
--- instance
-instance FromJSON BasicUser
-instance ToJSON BasicUser
-
--- An `Arbitrary` instance for `BasicUser` that automatically derives the
--- typeclass methods required to generate random `BasicUser`s using the
--- datatype's automatically derived `Generic` instance.
-instance Arbitrary BasicUser where
-  arbitrary :: Gen BasicUser
-  arbitrary = genericArbitraryU
-
---------------------------------------------------------------------------------
--- | A moderator within the service, containing a list of sub-communities that
--- | they are responsible for governing, as well as a record of the `Admin` who
--- | promoted them to moderatorship.
-data Moderator
-  = Moderator
-  { mUsername     :: !Text
-  , mPassword     :: !Text
-  , mEmailAddress :: !Text
-  , mGoverns      :: ![Text]
-  , mPromotedBy   :: !Admin
-  , mActive       :: !Bool
-  , mCreatedAt    :: !UTCTime
-  , mUpdatedAt    :: !UTCTime
-  } deriving (Eq, Generic, Show)
-
--- Aeson typeclass instances that automatically derive JSON de/serialization
--- methods for `Moderator` using the datatype's automatically derived `Generic`
--- instance
-instance FromJSON Moderator
-instance ToJSON Moderator
-
--- An `Arbitrary` instance for `Moderator` that automatically derives the
--- typeclass methods required to generate random `Moderator`s using the
--- datatype's automatically derived `Generic` instance.
-instance Arbitrary Moderator where
-  arbitrary :: Gen Moderator
-  arbitrary = genericArbitraryU
-
---------------------------------------------------------------------------------
 -- | An administrator of the service, containing an optional field for the
 -- | `Admin` who promoted them.
 -- |
@@ -128,11 +54,48 @@ data Admin
   , aUpdatedAt    :: !UTCTime
   } deriving (Eq, Generic, Show)
 
--- Aeson typeclass instances that automatically derive JSON de/serialization
--- methods for `Admin` using the datatype's automatically derived `Generic`
--- instance
-instance FromJSON Admin
-instance ToJSON Admin
+-- | A moderator within the service, containing a list of sub-communities that
+-- | they are responsible for governing, as well as a record of the `Admin` who
+-- | promoted them to moderatorship.
+data Moderator
+  = Moderator
+  { mUsername     :: !Text
+  , mPassword     :: !Text
+  , mEmailAddress :: !Text
+  , mGoverns      :: ![Text]
+  , mPromotedBy   :: !Admin
+  , mActive       :: !Bool
+  , mCreatedAt    :: !UTCTime
+  , mUpdatedAt    :: !UTCTime
+  } deriving (Eq, Generic, Show)
+
+-- | A "basic" user within the service.
+data BasicUser
+  = BasicUser
+  { buUsername     :: !Text
+  , buPassword     :: !Text
+  , buEmailAddress :: !Text
+  , buActive       :: !Bool
+  , buCreatedAt    :: !UTCTime
+  , buUpdatedAt    :: !UTCTime
+  } deriving (Eq, Generic, Show)
+
+--------------------------------------------------------------------------------
+-- Arbitrary data generation
+--------------------------------------------------------------------------------
+-- An `Arbitrary` instance for `User` that automatically derives the typeclass
+-- methods required to generate random `User`s using the datatype's
+-- automatically derived `Generic` instance.
+instance Arbitrary User where
+  arbitrary :: Gen User
+  arbitrary = genericArbitraryU
+
+-- A `ToADTArbitrary` instance for `User`, which helps create arbitrary values
+-- every constructor in an algebraic data type.
+--
+-- This is especially useful for sum types, so that there's a guarantee that
+-- all branches of the sum are properly tested.
+instance ToADTArbitrary User
 
 -- An `Arbitrary` instance for `Admin` that automatically derives the typeclass
 -- methods required to generate random `Admin`s using the datatype's
@@ -155,112 +118,102 @@ instance Arbitrary Admin where
         <*> arbitrary
         <*> arbitrary
 
+-- An `Arbitrary` instance for `BasicUser` that automatically derives the
+-- typeclass methods required to generate random `BasicUser`s using the
+-- datatype's automatically derived `Generic` instance.
+instance Arbitrary BasicUser where
+  arbitrary :: Gen BasicUser
+  arbitrary = genericArbitraryU
+
+-- An `Arbitrary` instance for `Moderator` that automatically derives the
+-- typeclass methods required to generate random `Moderator`s using the
+-- datatype's automatically derived `Generic` instance.
+instance Arbitrary Moderator where
+  arbitrary :: Gen Moderator
+  arbitrary = genericArbitraryU
+
 --------------------------------------------------------------------------------
--- Helper functions to demosntrat arbitrary generation of datatypes _and_ their
--- generically derived JSON encoders/decoders
+-- JSON serialization/deserialization
+--------------------------------------------------------------------------------
+-- Aeson typeclass instances that automatically derive JSON de/serialization
+-- methods for `User` using the datatype's automatically derived `Generic`
+-- instance
+instance FromJSON User
+instance ToJSON User
 
-arbitraryUserJson :: IO LBS.ByteString
-arbitraryUserJson = do
-  arbitraryUser :: User <- generate arbitrary
-  pure (encodePretty arbitraryUser)
+-- Aeson typeclass instances that automatically derive JSON de/serialization
+-- methods for `BasicUser` using the datatype's automatically derived `Generic`
+-- instance
+instance FromJSON BasicUser
+instance ToJSON BasicUser
 
-printArbitraryEncodedUser :: IO ()
-printArbitraryEncodedUser = do
-  encodedUser <- arbitraryUserJson
-  LBS.putStrLn encodedUser
+-- Aeson typeclass instances that automatically derive JSON de/serialization
+-- methods for `Moderator` using the datatype's automatically derived `Generic`
+-- instance
+instance FromJSON Moderator
+instance ToJSON Moderator
 
-printArbitraryDecodedUser :: IO ()
-printArbitraryDecodedUser = do
-  encodedUser <- arbitraryUserJson
-  let (maybeUser :: Maybe User) = decode encodedUser
-  case maybeUser of
-    Nothing   -> print ("Failed to decode a User!" :: Text)
-    Just user -> print user
-
-{-
+-- Aeson typeclass instances that automatically derive JSON de/serialization
+-- methods for `Admin` using the datatype's automatically derived `Generic`
+-- instance
+instance FromJSON Admin
+instance ToJSON Admin
 
 --------------------------------------------------------------------------------
 -- Modified Generic JSON serialiation and deserialization
 --------------------------------------------------------------------------------
+-- -- | Modifications to Aeson's generic JSON encoders/decoders to make the
+-- -- | resulting output JSON a little more idiomatic.
+-- -- |
+-- -- | Takes an input function that modifies the record field labels before
+-- -- | converting them from "CamelCase" to "snake_case".
+-- -- |
+-- -- | Additionally it, removes the `'` character from any constructor names,
+-- -- | converts all constructor names from "CamelCase" to "snake_case", and
+-- -- | wraps the generated JSON in an object whose key is the constructor name.
+-- idiomaticJsonOptions :: (String -> String) -> Options
+-- idiomaticJsonOptions f = defaultOptions
+--   { constructorTagModifier = camelTo2 '_' . filter (not . (== '\''))
+--   , fieldLabelModifier = camelTo2 '_' . f
+--   , sumEncoding = ObjectWithSingleField
+--   , tagSingleConstructors = True
+--   }
 
--- JSON serialization and deserialization typeclass instances for `User`s,
--- slightly modified to produce more idiomatic JSON output
-instance FromJSON User where
-  parseJSON = genericParseJSON userJsonOptions
+-- -- JSON serialization and deserialization typeclass instances for `User`s,
+-- -- slightly modified to produce more idiomatic JSON output
+-- instance FromJSON User where
+--   parseJSON = genericParseJSON (idiomaticJsonOptions id)
+--     { sumEncoding = UntaggedValue
+--     }
 
-instance ToJSON User where
-  toJSON = genericToJSON userJsonOptions
+-- instance ToJSON User where
+--   toJSON = genericToJSON (idiomaticJsonOptions id)
+--     { sumEncoding = UntaggedValue
+--     }
 
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `User`s.
-userJsonOptions :: Options
-userJsonOptions
-  = defaultOptions
-  { -- TODO(jkachmar): Explain what this option does
-    sumEncoding = ObjectWithSingleField
-    -- TODO(jkachmar): Explain what this option modifies
-  , constructorTagModifier =
-      -- Filters out any ' characters, which are used in `User`, but not useful
-      -- to leak into our JSON codecs
-      let dropTicks = filter $ not . \char -> (char == '\'')
-      in camelTo2 '_' . dropTicks
-  }
+-- -- JSON serialization and deserialization typeclass instances for `User`s,
+-- -- slightly modified to produce more idiomatic JSON output
+-- instance FromJSON BasicUser where
+--   parseJSON = genericParseJSON (idiomaticJsonOptions (drop 2))
 
---------------------------------------------------------------------------------
--- JSON serialization and deserialization typeclass instances for `User`s,
--- slightly modified to produce more idiomatic JSON output
-instance FromJSON BasicUser where
-  parseJSON = genericParseJSON basicUserJsonOptions
+-- instance ToJSON BasicUser where
+--   toJSON = genericToJSON (idiomaticJsonOptions (drop 2))
 
-instance ToJSON BasicUser where
-  toJSON = genericToJSON basicUserJsonOptions
+-- -- JSON serialization and deserialization typeclass instances for
+-- -- `Moderator`s, slightly modified to produce more idiomatic JSON output
+-- instance FromJSON Moderator where
+--   parseJSON = genericParseJSON (idiomaticJsonOptions (drop 1))
 
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `BasicUser`s.
-basicUserJsonOptions :: Options
-basicUserJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("bu" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 2
-  }
+-- instance ToJSON Moderator where
+--   toJSON = genericToJSON (idiomaticJsonOptions (drop 1))
 
---------------------------------------------------------------------------------
--- JSON serialization and deserialization typeclass instances for
--- `Moderator`s, slightly modified to produce more idiomatic JSON output
-instance FromJSON Moderator where
-  parseJSON = genericParseJSON moderatorJsonOptions
+-- -- JSON serialization and deserialization typeclass instances for `Admin`s,
+-- -- slightly modified to produce more idiomatic JSON output
+-- instance FromJSON Admin where
+--   parseJSON = genericParseJSON (idiomaticJsonOptions (drop 1))
 
-instance ToJSON Moderator where
-  toJSON = genericToJSON moderatorJsonOptions
-
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `Moderator`s.
-moderatorJsonOptions :: Options
-moderatorJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("m" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 1
-  }
-
---------------------------------------------------------------------------------
--- JSON serialization and deserialization typeclass instances for `Admin`s,
--- slightly modified to produce more idiomatic JSON output
-instance FromJSON Admin where
-  parseJSON = genericParseJSON adminJsonOptions
-
-instance ToJSON Admin where
-  toJSON = genericToJSON adminJsonOptions
-
--- | Modifications to Aeson's generic JSON encoding/decoding features for
--- | `Admin`s.
-adminJsonOptions :: Options
-adminJsonOptions
-  = defaultOptions
-  { -- Drop the leading 2 chars ("a" prefix) and convert to snake_case
-    fieldLabelModifier = camelTo2 '_' . drop 1
-  }
-
--- -}
+-- instance ToJSON Admin where
+--   toJSON = genericToJSON (idiomaticJsonOptions (drop 1))
 
 --------------------------------------------------------------------------------
 -- Servant routing and web server
@@ -272,8 +225,7 @@ adminJsonOptions
 -- |
 -- | A brief summary of the symbols involved:
 -- |
--- | (:-) - Boilerplate that helps the framework resolve the type following it
--- | as either a standalone Route or an internal Link to another resource.
+-- | (:-) - Boilerplate that helps Servant resolve the routing type.
 -- |
 -- | (:>) - A generic resource separator, this symbol is used to separate logical
 -- | components of the API type, such as path segments, capture groups, query
@@ -347,3 +299,25 @@ routeHandlers = Routes
 -- | The entry point for the application.
 runServer :: IO ()
 runServer = run 8080 . logStdoutDev $ genericServe routeHandlers
+
+--------------------------------------------------------------------------------
+-- Helper functions to demosntrat arbitrary generation of datatypes _and_ their
+-- generically derived JSON encoders/decoders
+
+arbitraryUserJson :: IO LBS.ByteString
+arbitraryUserJson = do
+  arbitraryUser :: User <- generate arbitrary
+  pure (encodePretty arbitraryUser)
+
+printArbitraryEncodedUser :: IO ()
+printArbitraryEncodedUser = do
+  encodedUser <- arbitraryUserJson
+  LBS.putStrLn encodedUser
+
+printArbitraryDecodedUser :: IO ()
+printArbitraryDecodedUser = do
+  encodedUser <- arbitraryUserJson
+  let (maybeUser :: Maybe User) = decode encodedUser
+  case maybeUser of
+    Nothing   -> print ("Failed to decode a User!" :: Text)
+    Just user -> pPrint user
