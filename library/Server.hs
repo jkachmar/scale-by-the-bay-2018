@@ -5,7 +5,6 @@ import           Control.Monad                        (when)
 import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty
-import qualified Data.ByteString.Lazy                 as LBS
 import qualified Data.ByteString.Lazy.Char8           as LBS8
 import           Data.Proxy
 import           Data.Text                            (Text)
@@ -310,6 +309,8 @@ routeHandlers = Routes
 -- Swagger schema generation
 --------------------------------------------------------------------------------
 
+-- | An example `Admin` user that's been manually created so the generated
+-- | Swagger documentation has nice, legible examples.
 exampleAdmin :: Admin
 exampleAdmin =
   let timestamp = UTCTime (fromGregorian 2018 1 1) 0
@@ -323,6 +324,8 @@ exampleAdmin =
     , aPromotedBy = Nothing
     }
 
+-- | An example `Moderator` user that's been manually created so the generated
+-- | Swagger documentation has nice, legible examples.
 exampleModerator :: Moderator
 exampleModerator =
   let timestamp = UTCTime (fromGregorian 2018 2 1) 0
@@ -330,36 +333,54 @@ exampleModerator =
     { mUsername = "jkachmar"
     , mPassword = "123456"
     , mEmailAddress = "jkachmar@example.com"
-    , mGoverns = ["Scale by the Bay 2018"]
+    , mGoverns = ["Practical Haskell Demystified"]
     , mActive = True
     , mCreatedAt = timestamp
     , mUpdatedAt = timestamp
     , mPromotedBy = exampleAdmin
     }
 
+-- | An example `BasicUser` user that's been manually created so the generated
+-- | Swagger documentation has nice, legible examples.
 exampleBasicUser :: BasicUser
 exampleBasicUser =
   let timestamp = UTCTime (fromGregorian 2018 3 1) 0
   in BasicUser
-    { buUsername = "jkachmar"
+    { buUsername = "serf"
     , buPassword = "123456"
-    , buEmailAddress = "jkachmar@example.com"
+    , buEmailAddress = "serf@example.com"
     , buActive = True
     , buCreatedAt = timestamp
     , buUpdatedAt = timestamp
     }
 
+-- Some of the following functions use lenses to modify fields with the
+-- following operators:
+--
+-- (&) - Flipped function application, ensures that all expressions on the
+-- left of the operator are executed first, then passed to the expressions on
+-- the right of the operator
+--
+-- (.~) - Sets a field that contains a non-optional value.
+--
+-- (?~) - Sets a field that contains an optional value.
+
+-- Swagger typeclass instance that generates documentation for `User`s.
+--
+-- `genericDeclareNamedSchema` automatically derives a Swagger schema from
+-- `User`'s `Generic` instance that is then updated via lenses.
 instance ToSchema User where
   declareNamedSchema user =
     let schemaOptions = fromAesonOptions $ idiomaticJsonOptions id
     in genericDeclareNamedSchema schemaOptions user
       & mapped.schema.description ?~ "An administrator, moderator, or basic \
                                      \ user within this service."
-      & mapped.schema.example ?~ toJSON [ Admin' exampleAdmin
-                                        , Moderator' exampleModerator
-                                        , BasicUser' exampleBasicUser
-                                        ]
+      & mapped.schema.example ?~ toJSON (Admin' exampleAdmin)
 
+-- Swagger typeclass instance that generates documentation for `Admin`s.
+--
+-- `genericDeclareNamedSchema` automatically derives a Swagger schema from
+-- `Admin`'s `Generic` instance that is then updated via lenses.
 instance ToSchema Admin where
   declareNamedSchema admin =
     let schemaOptions = fromAesonOptions $ idiomaticJsonOptions (drop 1)
@@ -367,6 +388,10 @@ instance ToSchema Admin where
       & mapped.schema.description ?~ "An administrator within this service."
       & mapped.schema.example ?~ toJSON exampleAdmin
 
+-- Swagger typeclass instance that generates documentation for `Admin`s.
+--
+-- `genericDeclareNamedSchema` automatically derives a Swagger schema from
+-- `Admin`'s `Generic` instance that is then updated via lenses.
 instance ToSchema Moderator where
   declareNamedSchema moderator =
     let schemaOptions = fromAesonOptions $ idiomaticJsonOptions (drop 1)
@@ -374,6 +399,10 @@ instance ToSchema Moderator where
       & mapped.schema.description ?~ "A moderator within this service."
       & mapped.schema.example ?~ toJSON exampleModerator
 
+-- Swagger typeclass instance that generates documentation for `Admin`s.
+--
+-- `genericDeclareNamedSchema` automatically derives a Swagger schema from
+-- `Admin`'s `Generic` instance that is then updated via lenses.
 instance ToSchema BasicUser where
   declareNamedSchema basicUser =
     let schemaOptions = fromAesonOptions $ idiomaticJsonOptions (drop 2)
@@ -391,14 +420,21 @@ serviceSwagger = toSwagger (genericApi $ Proxy @Routes)
                          URL "https://www.apache.org/licenses/LICENSE-2.0")
   & info.description ?~ "Hello, Scale by the Bay! This is small demo that \
                         \demonstrates how one might go about sketching out  \
-                        \sketching out a data model for some idea in Haskell \
-                        \and incrementally turning it into a real, functioning \
-                        \web service."
+                        \a data model for some idea in Haskell and \
+                        \incrementally turning it into a real, functioning web \
+                        \service."
 
+-- | Type-level routing definition for all of the routes in the API.
+-- |
+-- | We revert to Servant's non-record style of routing here to support the
+-- | automatic derivation by `SwaggerSchemaUI`.
 type AllRoutes
   =    ToServantApi Routes
   :<|> SwaggerSchemaUI "docs" "resources/swagger.json"
 
+-- | Value-level server implementation for `AllRoutes` that dispatches the API
+-- | handlers to either the route handlers defined earlier or the Swagger
+-- | documentation server.
 allRouteHandlers :: Server AllRoutes
 allRouteHandlers =
        genericServer routeHandlers
@@ -418,7 +454,7 @@ runServer = do
 -- Helper functions to demosntrat arbitrary generation of datatypes _and_ their
 -- generically derived JSON encoders/decoders
 
-arbitraryUserJson :: IO LBS.ByteString
+arbitraryUserJson :: IO LBS8.ByteString
 arbitraryUserJson = do
   arbitraryUser :: User <- generate arbitrary
   pure (encodePretty arbitraryUser)
@@ -426,7 +462,7 @@ arbitraryUserJson = do
 printArbitraryEncodedUser :: IO ()
 printArbitraryEncodedUser = do
   encodedUser <- arbitraryUserJson
-  LBS.putStrLn encodedUser
+  LBS8.putStrLn encodedUser
 
 printArbitraryDecodedUser :: IO ()
 printArbitraryDecodedUser = do
