@@ -308,7 +308,6 @@ routeHandlers = Routes
 --------------------------------------------------------------------------------
 -- Swagger schema generation
 --------------------------------------------------------------------------------
-
 -- | An example `Admin` user that's been manually created so the generated
 -- | Swagger documentation has nice, legible examples.
 exampleAdmin :: Admin
@@ -428,15 +427,15 @@ serviceSwagger = toSwagger (genericApi $ Proxy @Routes)
 -- |
 -- | We revert to Servant's non-record style of routing here to support the
 -- | automatic derivation by `SwaggerSchemaUI`.
-type AllRoutes
+type API
   =    ToServantApi Routes
   :<|> SwaggerSchemaUI "docs" "resources/swagger.json"
 
 -- | Value-level server implementation for `AllRoutes` that dispatches the API
 -- | handlers to either the route handlers defined earlier or the Swagger
 -- | documentation server.
-allRouteHandlers :: Server AllRoutes
-allRouteHandlers =
+apiHandler :: Server API
+apiHandler =
        genericServer routeHandlers
   :<|> redocSchemaUIServer serviceSwagger
 
@@ -448,7 +447,7 @@ runServer = do
   swaggerExists <- doesFileExist relativePath
   when swaggerExists $ removeFile relativePath
   LBS8.writeFile relativePath $ encodePretty serviceSwagger
-  run 8080 . logStdoutDev $ serve (Proxy @AllRoutes) allRouteHandlers
+  run 8080 . logStdoutDev $ serve (Proxy @API) apiHandler
 
 --------------------------------------------------------------------------------
 -- Helper functions to demosntrat arbitrary generation of datatypes _and_ their
@@ -467,7 +466,4 @@ printArbitraryEncodedUser = do
 printArbitraryDecodedUser :: IO ()
 printArbitraryDecodedUser = do
   encodedUser <- arbitraryUserJson
-  let (maybeUser :: Maybe User) = decode encodedUser
-  case maybeUser of
-    Nothing   -> print ("Failed to decode a User!" :: Text)
-    Just user -> pPrint user
+  pPrint (decode encodedUser :: Maybe User)
