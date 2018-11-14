@@ -222,7 +222,6 @@ routeHandlers = Routes
 --------------------------------------------------------------------------------
 -- Swagger schema generation
 --------------------------------------------------------------------------------
-
 exampleAdmin :: Admin
 exampleAdmin =
   let timestamp = UTCTime (fromGregorian 2018 1 1) 0
@@ -303,12 +302,12 @@ serviceSwagger = toSwagger (genericApi $ Proxy @Routes)
                         \incrementally turning it into a real, functioning web \
                         \service."
 
-type AllRoutes
+type API
   =    ToServantApi Routes
   :<|> SwaggerSchemaUI "docs" "resources/swagger.json"
 
-allRouteHandlers :: Server AllRoutes
-allRouteHandlers =
+apiHandler :: Server API
+apiHandler =
        genericServer routeHandlers
   :<|> redocSchemaUIServer serviceSwagger
 
@@ -319,7 +318,7 @@ runServer = do
   swaggerExists <- doesFileExist relativePath
   when swaggerExists $ removeFile relativePath
   LBS8.writeFile relativePath $ encodePretty serviceSwagger
-  run 8080 . logStdoutDev $ serve (Proxy @AllRoutes) allRouteHandlers
+  run 8080 . logStdoutDev $ serve (Proxy @API) apiHandler
 
 --------------------------------------------------------------------------------
 arbitraryUserJson :: IO LBS8.ByteString
@@ -335,7 +334,4 @@ printArbitraryEncodedUser = do
 printArbitraryDecodedUser :: IO ()
 printArbitraryDecodedUser = do
   encodedUser <- arbitraryUserJson
-  let (maybeUser :: Maybe User) = decode encodedUser
-  case maybeUser of
-    Nothing   -> print ("Failed to decode a User!" :: Text)
-    Just user -> pPrint user
+  pPrint (decode encodedUser :: Maybe User)
