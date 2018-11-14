@@ -1,3 +1,4 @@
 .stack-work/
 scalebythebay.cabal
 *~
+resources/swagger.json

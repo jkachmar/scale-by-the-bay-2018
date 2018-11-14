@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1fd231d63a4af6cbc2deef4db3e2f94cbf042539b0dfd3913fa14be0dda4cf27
+-- hash: 57fc2dbc338ae01dba201cd21dda869b8d50b5fea6a6c68c7aa59ecbabd624c0
 
 name:           scale-by-the-bay
 version:        0.1.0
@@ -12,7 +12,6 @@ description:    Please see the README on GitHub at <https://github.com/jkachmar/
 homepage:       https://github.com/jkachmar/scale-by-the-bay-2018#readme
 bug-reports:    https://github.com/jkachmar/scale-by-the-bay-2018/issues
 author:         Joe Kachmar
-maintainer:     joseph.kachmar@gmail.com
 copyright:      2018 Joe Kachmar
 license:        Apache-2.0
 license-file:   LICENSE
@@ -40,12 +39,17 @@ library
     , aeson-pretty >=0.8.7 && <0.9
     , base >=4.7 && <5
     , bytestring >=0.10.8.2 && <0.11
+    , directory >=1.3.1.5 && <1.4
     , generic-random >=1.2.0.0 && <1.3
+    , microlens >=0.4.9.1 && <0.5
     , pretty-simple >=2.1.0.1 && <2.3
     , quickcheck-arbitrary-adt >=0.3.1.0 && <0.4
     , quickcheck-instances >=0.3.19 && <0.4
     , servant >=0.14.1 && <0.15
     , servant-server >=0.14.1 && <0.15
+    , servant-swagger >=1.1.6 && <1.2
+    , servant-swagger-ui-redoc ==0.3.0.1.21.2
+    , swagger2 >=2.2.2 && <2.3
     , text >=1.2.3.1 && <1.3
     , time >=1.8.0.2 && <1.10
     , wai-extra >=3.0.24.3 && <3.1
