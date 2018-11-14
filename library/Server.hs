@@ -5,7 +5,6 @@ import           Control.Monad                        (when)
 import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty
-import qualified Data.ByteString.Lazy                 as LBS
 import qualified Data.ByteString.Lazy.Char8           as LBS8
 import           Data.Proxy
 import           Data.Text                            (Text)
@@ -40,16 +39,12 @@ import           Servant.Swagger.UI.ReDoc
 --------------------------------------------------------------------------------
 -- Application data model
 --------------------------------------------------------------------------------
--- | A user within the service, who must be one of the `Admin`, `Moderator` or
--- | `BasicUser` types.
 data User
   = Admin'     !Admin
   | Moderator' !Moderator
   | BasicUser' !BasicUser
   deriving (Eq, Generic, Show)
 
--- | An administrator of the service, containing an optional field for the
--- | `Admin` who promoted them.
 data Admin
   = Admin
   { aUsername     :: !Text
@@ -61,9 +56,6 @@ data Admin
   , aPromotedBy   :: !(Maybe Admin)
   } deriving (Eq, Generic, Show)
 
--- | A moderator within the service, containing a list of sub-communities that
--- | they are responsible for governing, as well as a record of the `Admin` who
--- | promoted them to moderatorship.
 data Moderator
   = Moderator
   { mUsername     :: !Text
@@ -76,7 +68,6 @@ data Moderator
   , mPromotedBy   :: !Admin
   } deriving (Eq, Generic, Show)
 
--- | A "basic" user within the service.
 data BasicUser
   = BasicUser
   { buUsername     :: !Text
@@ -105,8 +96,6 @@ instance Arbitrary Moderator where
   arbitrary :: Gen Moderator
   arbitrary = genericArbitraryU
 
--- Because `Admin` can recursively contain more `Admin`s, a "base case" is
--- provided that explicitly does _not_ contain an `Admin`
 instance Arbitrary Admin where
   arbitrary :: Gen Admin
   arbitrary = genericArbitraryRec uniform `withBaseCase` baseAdminCase
@@ -139,8 +128,6 @@ instance ToJSON Admin
 --------------------------------------------------------------------------------
 -- Modified JSON serialization/deserialization typeclass instances
 --------------------------------------------------------------------------------
--- | Modifications to Aeson's generic JSON encoders/decoders to make the output
--- | JSON a little more idiomatic.
 idiomaticJsonOptions :: (String -> String) -> Options
 idiomaticJsonOptions f = defaultOptions
   { constructorTagModifier = camelTo2 '_' . filter (not . (== '\''))
@@ -180,7 +167,6 @@ idiomaticJsonOptions f = defaultOptions
 --------------------------------------------------------------------------------
 -- Routing definitions
 --------------------------------------------------------------------------------
--- | The API specification for all routes associated with a `User`.
 data UserRoutes route
   = UserRoutes
   -- Equivalent to a "/users" route that accepts GET requests and returns JSON
@@ -215,8 +201,6 @@ data UserRoutes route
       :> "users" :> "admins" :> Get '[JSON] [Admin]
   } deriving Generic
 
--- | A record of handlers corresponding to each of API routes specified in
--- | `UserRoutes`.
 userRouteHandlers :: UserRoutes AsServer
 userRouteHandlers = UserRoutes
   { getUsers      = liftIO $ generate arbitrary
@@ -225,14 +209,11 @@ userRouteHandlers = UserRoutes
   , getAdmins     = liftIO $ generate arbitrary
   }
 
--- | The API specification for all non-documentation routes in the application.
 data Routes route
   = Routes
   { v1Routes :: route :- "v1" :> (ToServantApi UserRoutes)
   } deriving Generic
 
--- | A record of handlers corresponding to each of API routes specified in
--- | `Routes`.
 routeHandlers :: Routes AsServer
 routeHandlers = Routes
   { v1Routes = genericServer userRouteHandlers
@@ -262,7 +243,7 @@ exampleModerator =
     { mUsername = "jkachmar"
     , mPassword = "123456"
     , mEmailAddress = "jkachmar@example.com"
-    , mGoverns = ["Scale by the Bay 2018"]
+    , mGoverns = ["Practical Haskell Demystified"]
     , mActive = True
     , mCreatedAt = timestamp
     , mUpdatedAt = timestamp
@@ -273,9 +254,9 @@ exampleBasicUser :: BasicUser
 exampleBasicUser =
   let timestamp = UTCTime (fromGregorian 2018 3 1) 0
   in BasicUser
-    { buUsername = "jkachmar"
+    { buUsername = "serf"
     , buPassword = "123456"
-    , buEmailAddress = "jkachmar@example.com"
+    , buEmailAddress = "serf@example.com"
     , buActive = True
     , buCreatedAt = timestamp
     , buUpdatedAt = timestamp
@@ -287,10 +268,7 @@ instance ToSchema User where
     in genericDeclareNamedSchema schemaOptions user
       & mapped.schema.description ?~ "An administrator, moderator, or basic \
                                      \ user within this service."
-      & mapped.schema.example ?~ toJSON [ Admin' exampleAdmin
-                                        , Moderator' exampleModerator
-                                        , BasicUser' exampleBasicUser
-                                        ]
+      & mapped.schema.example ?~ toJSON (Admin' exampleAdmin)
 
 instance ToSchema Admin where
   declareNamedSchema admin =
@@ -313,8 +291,6 @@ instance ToSchema BasicUser where
       & mapped.schema.description ?~ "A basic user within this service."
       & mapped.schema.example ?~ toJSON exampleBasicUser
 
--- | Swagger definition for this service, modified to provide additional
--- | about the service.
 serviceSwagger :: Swagger
 serviceSwagger = toSwagger (genericApi $ Proxy @Routes)
   & info.title       .~ "Scale by the Bay"
@@ -323,9 +299,9 @@ serviceSwagger = toSwagger (genericApi $ Proxy @Routes)
                          URL "https://www.apache.org/licenses/LICENSE-2.0")
   & info.description ?~ "Hello, Scale by the Bay! This is small demo that \
                         \demonstrates how one might go about sketching out  \
-                        \sketching out a data model for some idea in Haskell \
-                        \and incrementally turning it into a real, functioning \
-                        \web service."
+                        \a data model for some idea in Haskell and \
+                        \incrementally turning it into a real, functioning web \
+                        \service."
 
 type AllRoutes
   =    ToServantApi Routes
@@ -337,7 +313,6 @@ allRouteHandlers =
   :<|> redocSchemaUIServer serviceSwagger
 
 --------------------------------------------------------------------------------
--- | The entry point for this service.
 runServer :: IO ()
 runServer = do
   let relativePath = "resources/swagger.json"
@@ -347,10 +322,7 @@ runServer = do
   run 8080 . logStdoutDev $ serve (Proxy @AllRoutes) allRouteHandlers
 
 --------------------------------------------------------------------------------
--- Helper functions to demonstrate arbitrary generation of datatypes _and_ their
--- generically derived JSON encoders/decoders
-
-arbitraryUserJson :: IO LBS.ByteString
+arbitraryUserJson :: IO LBS8.ByteString
 arbitraryUserJson = do
   arbitraryUser :: User <- generate arbitrary
   pure (encodePretty arbitraryUser)
@@ -358,7 +330,7 @@ arbitraryUserJson = do
 printArbitraryEncodedUser :: IO ()
 printArbitraryEncodedUser = do
   encodedUser <- arbitraryUserJson
-  LBS.putStrLn encodedUser
+  LBS8.putStrLn encodedUser
 
 printArbitraryDecodedUser :: IO ()
 printArbitraryDecodedUser = do
