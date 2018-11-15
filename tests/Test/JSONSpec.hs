@@ -11,7 +11,7 @@ import           Server                  (Admin, BasicUser, Moderator, User)
 spec :: Spec
 spec = do
   describe "roundtrip tests" $ do
-    roundtripADTSpecs (Proxy @User)
-    roundtripSpecs (Proxy @BasicUser)
-    roundtripSpecs (Proxy @Moderator)
-    roundtripSpecs (Proxy @Admin)
+    roundtripAndGoldenADTSpecs (Proxy @User)
+    roundtripAndGoldenSpecs (Proxy @BasicUser)
+    roundtripAndGoldenSpecs (Proxy @Moderator)
+    roundtripAndGoldenSpecs (Proxy @Admin)
